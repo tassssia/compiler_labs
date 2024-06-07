@@ -81,7 +81,6 @@ using utils::nl;
 
 %token <Symbol> ID "id"
 %token <Symbol> STRING "string"
-%token <int> INT "integer"
 
 // Declare the nonterminals types
 
@@ -90,9 +89,8 @@ using utils::nl;
 %type <std::vector<VarDecl *>> params nonemptyparams;
 %type <Decl *> decl funcDecl varDecl;
 %type <std::vector<Decl *>> decls;
-%type <Expr *> expr stringExpr seqExpr intExpr callExpr opExpr negExpr
-            assignExpr whileExpr forExpr breakExpr letExpr var 
-	    ifThenExpr ifThenElseExpr;
+%type <Expr *> expr stringExpr seqExpr callExpr opExpr negExpr
+            assignExpr whileExpr forExpr breakExpr letExpr var;
 
 %type <std::vector<Expr *>> exprs nonemptyexprs;
 %type <std::vector<Expr *>> arguments nonemptyarguments;
@@ -106,12 +104,6 @@ using utils::nl;
 // Declare precedence rules
 
 %nonassoc FUNCTION VAR TYPE DO OF ASSIGN;
-%left OR;
-%left AND;
-%left PLUS;
-%left MINUS;
-%left DIVIDE;
-%left TIMES;
 %left UMINUS;
 
 // Declare grammar rules and production actions
@@ -127,7 +119,6 @@ decl: varDecl { $$ = $1; }
 
 expr: stringExpr { $$ = $1; }
    | seqExpr { $$ = $1; }
-   | intExpr { $$ =$1;}
    | var { $$ = $1; }
    | callExpr { $$ = $1; }
    | opExpr { $$ = $1; }
@@ -137,8 +128,6 @@ expr: stringExpr { $$ = $1; }
    | forExpr { $$ = $1; }
    | breakExpr { $$ = $1; }
    | letExpr { $$ = $1; }
-   | ifThenExpr { $$ = $1; }
-   | ifThenElseExpr { $$ = $1; }
 ;
 
 varDecl: VAR ID typeannotation ASSIGN expr
@@ -153,10 +142,6 @@ funcDecl: FUNCTION ID LPAREN params RPAREN typeannotation EQ expr
 
 stringExpr: STRING
   { $$ = new StringLiteral(@1, $1); }
-;
-
-intExpr : INT
-   { $$ = new IntegerLiteral(@1, $1); }
 ;
 
 var : ID
@@ -189,12 +174,6 @@ opExpr: expr PLUS expr   { $$ = new BinaryOperator(@2, $1, $3, o_plus); }
                             new IfThenElse(@3, $3, new IntegerLiteral(nl, 1), new IntegerLiteral(nl, 0)),
                             new IntegerLiteral(nl, 0));
       }
-      | expr OR expr     {
-        $$ = new IfThenElse(@2, $1,
-                            new IntegerLiteral(nl, 1),
-                            new IfThenElse(@3, $3, new IntegerLiteral(nl, 1), 
-new IntegerLiteral(nl, 0)));
-      }
 ;
 
 
@@ -214,14 +193,6 @@ breakExpr: BREAK { $$ = new Break(@1); }
 
 letExpr: LET decls IN exprs END
   { $$ = new Let(@1, $2, new Sequence(nl, $4)); }
-;
-
-ifThenExpr : IF expr THEN expr
-  { $$ = new IfThenElse(@1, $2, $4, new Sequence(@4, std::vector<Expr *>())); }
-;
-
-ifThenElseExpr : IF expr THEN expr ELSE expr
-  { $$ = new IfThenElse(@1, $2, $4, $6); }
 ;
 
 seqExpr : LPAREN exprs RPAREN { $$ = new Sequence(@1, $2); }
